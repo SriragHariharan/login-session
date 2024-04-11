@@ -1,15 +1,19 @@
-
 <div class="container-fluid d-flex justify-content-center align-items-center" style="height: 100vh;">
     <div class="shadow p-5 bg-body-tertiary" style="width: 30rem;">
+
+    <h3 class="my-5 text-center text-danger">{{errorMessage}}</h3>
+    <h3 class="my-5 text-dark text-center">{{welcomeMessage}}</h3>
         {{!-- login form --}}
         <form action="/login" method="post">
             <div class="mb-3">
                 <labe class="form-label">Email </labe>
-                <input type="text" class="form-control" placeholder="you@domain.com">
+                <input id="user-email" name="email" type="text" class="form-control" placeholder="you@domain.com">
+                <small id="email-error"></small>
             </div>
             <div class="mb-5">
                 <labe class="form-label">Password</labe>
-                <input type="password" class="form-control" placeholder="Password">
+                <input id="user-password" name="password" type="password" class="form-control" placeholder="Password">
+                <small id="paswd-error"></small>
             </div>
             <div class="mb-3 text-center w-full">
                 <input class="btn btn-info" type="submit" value="Login now">

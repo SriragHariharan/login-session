@@ -1,11 +1,18 @@
 const express = require('express');
 const hbs = require('express-handlebars');
 const path = require('node:path');
-// const products = require('./products')
+const bodyParser = require('body-parser');
+var session = require('express-session')
+require('dotenv').config();
+const nocache = require("nocache");
 
 const app = express();
 
-require('dotenv').config();
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+// once the user has signed out, the home page shouldn't be loaded on pressing the back button.
+//this is caused by browser caching the previous page. To avoid this we use nocache to delete caching of browser 
+app.use(nocache());
 
 //view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -256,13 +263,44 @@ const products = [
     }
 ]
 
+//user credentials
+let user = {
+    email:"srirag@google.com",
+    password:"1234567",
+    name:"Srirag"
+}
+
+// Configure session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET_KEY,
+  resave: false,
+  saveUninitialized: false
+}));
+
 //routes
-app.get('/', async(req, res) => {
-    res.render('homepage', {products, username:"Srirag"})
+app.get('/', (req, res) => {
+    req.session?.user?.name ? res.render('homepage', {products, username:req.session.user.name}) : res.redirect('/login/0') 
+    
 })
 
-app.get('/login', async(req, res) => {
-    res.render('login')
+app.get('/login/:id', (req, res) => {
+    req.session.user?.name && res.redirect('/')
+    req.params.id==1 ? res.render('login', {errorMessage:"Invalid Login credentials !"}) : res.render('login', {welcomeMessage:"Hi Welcome back !"})
+})
+
+app.post('/login', (req, res) => {
+    if(req.body.email === user.email && req.body.password == user.password){
+        req.session.user = {name:user.name, email:req.body.email};
+        res.redirect('/')
+    }else{
+        res.redirect('/login/1');
+    }
+})
+
+app.get('/logout', (req, res) => {
+    req.session.user=null;
+    req.session.destroy();
+    res.redirect('/login/0')
 })
 
 app.listen(process.env.PORT, () => console.log(`Server started at http://localhost:${process.env.PORT}`))
