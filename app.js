@@ -2,7 +2,7 @@ const express = require('express');
 const hbs = require('express-handlebars');
 const path = require('node:path');
 const bodyParser = require('body-parser');
-var session = require('express-session')
+const session = require('express-session')
 require('dotenv').config();
 const nocache = require("nocache");
 
@@ -18,6 +18,13 @@ app.use(nocache());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 app.engine('hbs', hbs.engine({extname:'hbs', defaultLayout:'main', layoutsDir:__dirname+'/views/layout/', partialsDir:__dirname+'/views/partials/'}));
+
+// Configure session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: true,
+    saveUninitialized: false
+}));
 
 //products list
 const products = [
@@ -270,37 +277,34 @@ let user = {
     name:"Srirag"
 }
 
-// Configure session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET_KEY,
-  resave: false,
-  saveUninitialized: false
-}));
-
 //routes
 app.get('/', (req, res) => {
-    req.session?.user?.name ? res.render('homepage', {products, username:req.session.user.name}) : res.redirect('/login/0') 
+    req.session?.user?.name ? res.render('homepage', {products, username:req.session.user.name}) : res.redirect('/login') 
     
 })
 
-app.get('/login/:id', (req, res) => {
+app.get('/login', (req, res) => {
     req.session.user?.name && res.redirect('/')
-    req.params.id==1 ? res.render('login', {errorMessage:"Invalid Login credentials !"}) : res.render('login', {welcomeMessage:"Hi Welcome back !"})
+    res.render('login')
 })
 
 app.post('/login', (req, res) => {
     if(req.body.email === user.email && req.body.password == user.password){
-        req.session.user = {name:user.name, email:req.body.email};
+        req.session.user = {name:user.name};
         res.redirect('/')
+    }else if(req.body.email !== user.email && req.body.password === user.password){
+        res.render('login', {loginError: "Invalid email"});
+    }else if(req.body.email === user.email && req.body.password !== user.password){
+        res.render('login', {loginError: "Invalid password"});
     }else{
-        res.redirect('/login/1');
+        res.render('login', {loginError:"Please enter login crendentials"});
     }
 })
 
 app.get('/logout', (req, res) => {
     req.session.user=null;
     req.session.destroy();
-    res.redirect('/login/0')
+    res.redirect('/login')
 })
 
 app.listen(process.env.PORT, () => console.log(`Server started at http://localhost:${process.env.PORT}`))
